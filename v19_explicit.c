@@ -13,6 +13,7 @@
 
 #define X_POINTS_AMOUNT 10
 
+#define DEBUG_FILE_NAME "debug.dat"
 #define FILE_NAME "result.dat"
 
 #define MAX_SIGMA 0.05  //should be less than 0.5
@@ -112,18 +113,24 @@ double approx_x_second_deriv(double** matrix, int j, int i)
 void write_matrix_to_file(double** matrix)
 {
 	FILE* f = fopen(FILE_NAME, "w");
+	FILE* debug = fopen(DEBUG_FILE_NAME, "w");
 
 	//write meta info
 	fprintf(f, "%lf %d %lf\n", X_MIN, X_POINTS_AMOUNT, X_STEP);
 	fprintf(f, "%lf %d %lf\n", T_MIN, T_POINTS_AMOUNT, T_STEP);
+
+	fprintf(debug, "%lf %d %lf\n", X_MIN, X_POINTS_AMOUNT, X_STEP);
+	fprintf(debug, "%lf %d %lf\n", T_MIN, T_POINTS_AMOUNT, T_STEP);
 
 	//write matrix
 	for (int j = 0; j < T_POINTS_AMOUNT; ++j)
 	{
 		for (int i = 0; i < X_POINTS_AMOUNT; ++i)
 		{
-			fprintf(f, "[x: %lf t: %lf u: %lf]\n", X_MIN + X_STEP*i, T_MIN + T_STEP*j, matrix[j][i]);
+			fprintf(debug, "[x: %lf t: %lf u: %lf]\n", X_MIN + X_STEP*i, T_MIN + T_STEP*j, matrix[j][i]);
+			fprintf(f, "%lf ", matrix[j][i]);
 		}
 		fprintf(f, "\n");
+		fprintf(debug, "\n");
 	}
 }
