@@ -3,12 +3,13 @@
 
 plotter.py
 ---------
-Builds 3dPlot using matplotlib.
+Builds 3dPlot using matplotlib and numpy.
 
 For installing:
 
 ```python
 sudo apt-get install python-matplotlib
+sudo apt-get install python-numpy
 ```
 
 Data format:
