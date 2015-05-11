@@ -7,15 +7,15 @@
 #define B_FUNC 1.0
 
 #define X_MIN 0.0
-#define X_MAX 1.0
+#define X_MAX 0.7
 #define T_MIN 0.0
-#define T_MAX 1.0
+#define T_MAX 0.5
 
-#define X_POINTS_AMOUNT 5
+#define X_POINTS_AMOUNT 10
 
 #define FILE_NAME "result.dat"
 
-#define MAX_SIGMA 0.2   //should be less than 0.5
+#define MAX_SIGMA 0.05  //should be less than 0.5
 
 #define allocate(type, size) (type*)malloc(sizeof(type) * size)
 #define fill_array(arr, size, default_value) for (int _iqw_ = 0; _iqw_ < size; ++_iqw_) {arr[_iqw_] = default_value;}
@@ -42,6 +42,9 @@ int main(int argc, char const *argv[])
 	init_boundaries(matrix);
 	solve_pde(matrix);
 	write_matrix_to_file(matrix);
+
+	printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
+
 	return 0;
 }
 
@@ -73,17 +76,17 @@ void init_boundaries(double** matrix)
 	for(int j = 1; j < T_POINTS_AMOUNT; ++j)
 	{
 		matrix[j][0] = exact_solution_func(X_MIN, T_MIN + T_STEP * j);
-		matrix[j][X_POINTS_AMOUNT - 1] = 100500.0;//exact_solution_func(X_MAX, T_MIN + T_STEP * j);
+		matrix[j][X_POINTS_AMOUNT - 1] = exact_solution_func(X_MAX, T_MIN + T_STEP * j);
 	}
 }
 
 void solve_pde(double** matrix)
 {
-	for (int j = 0; j < T_POINTS_AMOUNT - 2; ++j)  //i for x axis, j for t axis
+	for (int j = 0; j < T_POINTS_AMOUNT - 1; ++j)  //i for x axis, j for t axis
 	{
-		for (int i = 1; i < X_POINTS_AMOUNT - 2; ++i)
+		for (int i = 1; i < X_POINTS_AMOUNT - 1; ++i)
 		{
-			matrix[j][i] = calculate_next_layer_point(matrix, j, i);
+			matrix[j+1][i] = calculate_next_layer_point(matrix, j, i);
 		}
 	}
 }
@@ -92,13 +95,8 @@ double calculate_next_layer_point(double** matrix, int j, int i)   //  i for x a
 {
 	return matrix[j][i] + A_DIFF * T_STEP * (
 		matrix[j][i] * matrix[j][i] * approx_x_second_deriv(matrix, j, i) +
-		2.0 * matrix[j][i] * approx_x_first_deriv(matrix, j, i)
+		2.0 * matrix[j][i] * pow(approx_x_first_deriv(matrix, j, i), 2.0)
 		);
-}
-
-double approx_t_first_deriv(double** matrix, int j, int i)   //i for x axis, j for t axis
-{
-	return (matrix[j + 1][i] - matrix[j][i]) / T_STEP;
 }
 
 double approx_x_first_deriv(double** matrix, int j, int i)
@@ -124,7 +122,7 @@ void write_matrix_to_file(double** matrix)
 	{
 		for (int i = 0; i < X_POINTS_AMOUNT; ++i)
 		{
-			fprintf(f, "%lf ", matrix[j][i]);
+			fprintf(f, "[x: %lf t: %lf u: %lf]\n", X_MIN + X_STEP*i, T_MIN + T_STEP*j, matrix[j][i]);
 		}
 		fprintf(f, "\n");
 	}
