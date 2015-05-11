@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define A_DIFF 1.0
-#define A_FUNC 1.0
-#define B_FUNC 1.0
+#define C 1.0
+#define A 1.0
+#define B -1.0
 
 #define X_MIN 0.0
-#define X_MAX 0.7
-#define T_MIN 0.0
-#define T_MAX 0.5
+#define X_MAX 0.5
+#define T_MIN -0.5
+#define T_MAX 0.0
 
 #define X_POINTS_AMOUNT 10
 
@@ -62,7 +62,7 @@ double** create_matrix(int N, int M)
 
 double exact_solution_func(double x, double t)
 {
-	return sqrt(pow(x - A_FUNC, 2.0) / (4 * A_DIFF * (B_FUNC - t)));
+	return pow(-sqrt(-B / A) + C * exp(-5 * A * t / 6 + x * sqrt((A + 1) / 6)), -2);
 }
 
 void init_boundaries(double** matrix)
@@ -81,7 +81,7 @@ void init_boundaries(double** matrix)
 	}
 }
 
-void solve_pde(double** matrix)
+ void solve_pde(double** matrix)
 {
 	for (int j = 0; j < T_POINTS_AMOUNT - 1; ++j)  //i for x axis, j for t axis
 	{
@@ -94,10 +94,7 @@ void solve_pde(double** matrix)
 
 double calculate_next_layer_point(double** matrix, int j, int i)   //  i for x axis, j for t axis
 {
-	return matrix[j][i] + A_DIFF * T_STEP * (
-		matrix[j][i] * matrix[j][i] * approx_x_second_deriv(matrix, j, i) +
-		2.0 * matrix[j][i] * pow(approx_x_first_deriv(matrix, j, i), 2.0)
-		);
+	return matrix[j][i] * (T_STEP * (1 - matrix[j][i]) + 1) + MAX_SIGMA * matrix[j][i + 1] + MAX_SIGMA * matrix[j][i - 1];
 }
 
 double approx_x_first_deriv(double** matrix, int j, int i)
