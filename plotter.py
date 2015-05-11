@@ -9,7 +9,7 @@ def drange(start, n, step):
 		result += float(step)
 
 def readDataFromFile():
-	return [line.strip().split() for line in open('result.dat')]
+	return [line.strip().split() for line in open('data/result.dat')]
 
 def getDataFromFile():
 	lines = readDataFromFile()
