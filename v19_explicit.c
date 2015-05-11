@@ -13,8 +13,8 @@
 
 #define X_POINTS_AMOUNT 10
 
-#define DEBUG_FILE_NAME "debug.dat"
-#define FILE_NAME "result.dat"
+#define DEBUG_FILE_NAME "data/debug.dat"
+#define FILE_NAME "data/result.dat"
 
 #define MAX_SIGMA 0.05  //should be less than 0.5
 
