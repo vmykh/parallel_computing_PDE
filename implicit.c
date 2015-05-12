@@ -3,7 +3,7 @@
 #include <math.h>
 
 #include "./lib/matrix.h"   //kroosh tridiagonal solver
-// #include "./lib/omp.h"      //kroosh tridiagonal parallel solver
+#include "./lib/omp.h"      //kroosh tridiagonal parallel solver
 
 #define A_DIFF 1.0       //vmykh   
 #define A_FUNC 1.0
@@ -58,6 +58,8 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 
 int main(int argc, char const *argv[])
 {
+  MPI_Init(NULL, NULL);
+
   double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
 
   printf("before init_boundaries\n");
@@ -70,6 +72,8 @@ int main(int argc, char const *argv[])
   write_matrix_to_file(matrix);
 
   printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
+
+  MPI_Finalize();
 
   return 0;
 }
@@ -154,7 +158,7 @@ void solve_pde(double** matrix)   //solve using implicit method
       mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
     	mx->A[mx->size - 1][mx->size - 1] = current_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
-      delta_x = tridiagonalmatrix_right_solve(mx);
+      delta_x = tridiagonal_mpi_solve(mx);
 
       copy_arr(current_values, prev_values, matrix_size);
       add_to_first_vector(current_values, delta_x, matrix_size);
