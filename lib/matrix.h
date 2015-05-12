@@ -184,3 +184,14 @@ void calculate_xies_and_etas(Matrix* mtr, double* xies, double* etas, int p)
     etas[i] = (b[i] - A[i][i+1]*etas[i+1]) / denominator;
   }
 }
+
+void delete_Matrix(Matrix* m)
+{
+  for (int i = 0; i < m->size; ++i)
+  {
+    free(m->A[i]);
+  }
+  free(m->b);
+  free(m->A);
+  free(m);
+}
