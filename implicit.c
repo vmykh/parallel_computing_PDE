@@ -156,5 +156,5 @@ double current_partial_derivative(double** matrix, int i, int j)
 
 double next_partial_derivative(double** matrix, int i, int j)
 {
-  
+  return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j+1][i+1] + 6 * matrix[j+1][i-1] - 8 * matrix[j+1][i]);
 }
