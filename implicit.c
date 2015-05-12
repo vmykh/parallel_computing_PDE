@@ -16,21 +16,21 @@
 #define B_FUNC 1.0
 
 
-#define X_MIN 0.1
+#define X_MIN 0.0
 #define X_MAX 0.7
-#define T_MIN 0.1
+#define T_MIN 0.0
 #define T_MAX 0.5
 
-#define X_POINTS_AMOUNT 30
+#define X_POINTS_AMOUNT 5
 
 #define DEBUG_FILE_NAME "data/debug.dat"
 #define FILE_NAME "data/result.dat"
 
-#define NEWTON_METHOD_TOLERANCE 0.0001  //condition to end iteration in Newton method: 
+#define NEWTON_METHOD_TOLERANCE 10000000.0  //condition to end iteration in Newton method: 
 					// max(vector_x_i - vector_X_i-1) < NEWTON_METHOD_TOLERANCE
 #define STARTING_VALUE_FOR_NEWTON_METHOD 0.5
 
-#define MAX_SIGMA 0.05  //should be less than 0.5
+#define MAX_SIGMA 0.1  //should be less than 0.5
 
 #define allocate(type, size) (type*)malloc(sizeof(type) * size)
 #define fill_array(arr, size, default_value) for (int _iqw_ = 0; _iqw_ < size; ++_iqw_) {arr[_iqw_] = default_value;}
@@ -41,7 +41,7 @@
 #define T_STEP (MAX_SIGMA * X_STEP * X_STEP)
 #define T_POINTS_AMOUNT (int) ((T_MAX - T_MIN) / T_STEP)
 
-#define ALPHA A_DIFF / X_STEP
+#define ALPHA A_DIFF / (X_STEP * X_STEP)
 
 double** create_matrix(int N, int M);
 double exact_solution_func(double x, double t);
@@ -53,7 +53,7 @@ double approx_t_first_deriv(double** matrix, int j, int i);   //i for x axis, j 
 double approx_x_first_deriv(double** matrix, int j, int i);
 double approx_x_second_deriv(double** matrix, int j, int i);
 
-int check_finish_condition(double* v1, double* v2, int size);
+int is_finish_condition(double* v1, double* v2, int size);
 void add_to_first_vector(double* v1, double* v2, int size);
 
 double finite_difference_function(double** matrix, int i, int j);
@@ -125,25 +125,22 @@ void solve_pde(double** matrix)   //solve using implicit method
     for (int i = 1; i < X_POINTS_AMOUNT - 1; ++i)   //starting Newton method
     {
     	matrix[j][i] = STARTING_VALUE_FOR_NEWTON_METHOD;
-      //matrix[j+1][i] = calculate_next_layer_point(matrix, j, i);
     }
 
-    int matrix_size = X_POINTS_AMOUNT - 1;
+    int matrix_size = X_POINTS_AMOUNT - 2;
 
     double* prev_values = allocate(double, matrix_size);
     double* delta_x;
-    double* current_values;
+    double* current_values = &(matrix[j][1]);
     do
     {
-    	current_values = &(matrix[j][1]);
-
       // copy_arr(current_values, prev_values, matrix_size);
 
     	Matrix* mx = allocate(Matrix, 1);
     	mx->size = matrix_size;
     	mx->b = allocate(double, matrix_size);
 
-    	mx->A = allocate(double*, square(matrix_size));
+    	mx->A = allocate(double*, matrix_size);
     	for (int i = 0; i < matrix_size; ++i)
     	{
     		mx->A[i] = allocate(double, matrix_size);
@@ -153,7 +150,7 @@ void solve_pde(double** matrix)   //solve using implicit method
     	//initilize vector b in mx
     	for (int i = 0; i < matrix_size; ++i)
     	{
-    		mx->b[i] = -finite_difference_function(matrix, i+1, j);
+    		mx->b[i] = finite_difference_function(matrix, i+1, j);
     	}
 
     	// mx->A[0][0] = 1;
@@ -168,14 +165,30 @@ void solve_pde(double** matrix)   //solve using implicit method
         mx->A[i][i+1] = next_partial_derivative(matrix, i + 1, j);
       }
 
-      	mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
+      mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
     	mx->A[mx->size - 1][mx->size - 1] = next_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
       delta_x = tridiagonalmatrix_right_solve(mx);
 
+      printf("delta x\n");
+      for(int p = 0; p < mx->size; ++p)
+      {
+        printf("%lf ", delta_x[p]);
+      }
+      printf("\n");
+
       copy_arr(current_values, prev_values, matrix_size);
       add_to_first_vector(current_values, delta_x, matrix_size);
-    } while (!check_finish_condition(current_values, prev_values, matrix_size));
+    } while (!is_finish_condition(current_values, prev_values, matrix_size));
+
+    printf("omegas x\n");
+    for(int p = 0; p < matrix_size; ++p)
+    {
+      printf("%lf ", prev_values[p]);
+      printf("%lf ", current_values[p]);
+      printf("\n");
+    }
+    printf("\n");
   }
 }
 
@@ -272,7 +285,7 @@ double finite_difference_function(double** matrix, int i, int j)
 	-( matrix[j][i]/ T_STEP ) + matrix[j-1][i] / T_STEP;
 }
 
-int check_finish_condition(double* v1, double* v2, int size)
+int is_finish_condition(double* v1, double* v2, int size)
 {
 	for (int i = 0; i < size; ++i)
 	{
