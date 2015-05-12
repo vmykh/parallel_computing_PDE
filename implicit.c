@@ -3,7 +3,7 @@
 #include <math.h>
 
 #include "./lib/matrix.h"   //kroosh tridiagonal solver
-#include "./lib/omp.h"      //kroosh tridiagonal parallel solver
+// #include "./lib/omp.h"      //kroosh tridiagonal parallel solver
 
 // #define A_DIFF 1.0      //kroosh
 // #define N_FUNC 1.0
@@ -54,7 +54,7 @@ double approx_x_first_deriv(double** matrix, int j, int i);
 double approx_x_second_deriv(double** matrix, int j, int i);
 
 int check_finish_condition(double* v1, double* v2, int size);
-
+void add_to_first_vector(double* v1, double* v2, int size);
 
 double finite_difference_function(double** matrix, int i, int j);
 double previous_partial_derivative(double** matrix, int i, int j);
@@ -70,9 +70,7 @@ int main(int argc, char const *argv[])
   double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
   init_boundaries(matrix);
   
-
-
-
+  solve_pde(matrix);
 
   write_matrix_to_file(matrix);
 
@@ -114,31 +112,33 @@ void init_boundaries(double** matrix)
   }
 }
 
-void solve_pde(double** matrix_ptr_2)   //solve using implicit method
+void solve_pde(double** matrix)   //solve using implicit method
 {
 	// at each iteration we are calculating values for j row
   for (int j = 1; j < T_POINTS_AMOUNT - 1; ++j)  //i for x axis, j for t axis
   {
 
-
     for (int i = 1; i < X_POINTS_AMOUNT - 1; ++i)   //starting Newton method
     {
-    	matrix_ptr_2[j][i] = STARTING_VALUE_FOR_NEWTON_METHOD;
+    	matrix[j][i] = STARTING_VALUE_FOR_NEWTON_METHOD;
       //matrix[j+1][i] = calculate_next_layer_point(matrix, j, i);
     }
 
     int matrix_size = X_POINTS_AMOUNT - 1;
 
     double* prev_values = allocate(double, matrix_size);
+    double* delta_x;
+    double* current_values;
     do
     {
-    	double* current_values = &(matrix_ptr_2[j][1]);
+    	current_values = &(matrix[j][1]);
 
-    	copy_arr(current_values, prev_values, matrix_size);
+      // copy_arr(current_values, prev_values, matrix_size);
 
-    	matrix* mx = allocate(matrix, 1);
+    	Matrix* mx = allocate(Matrix, 1);
     	mx->size = matrix_size;
     	mx->b = allocate(double, matrix_size);
+
     	mx->A = allocate(double*, square(matrix_size));
     	for (int i = 0; i < matrix_size; ++i)
     	{
@@ -148,17 +148,24 @@ void solve_pde(double** matrix_ptr_2)   //solve using implicit method
     	//initilize vector b in mx
     	for (int i = 0; i < matrix_size; ++i)
     	{
-    		mx->b[i] = finite_difference_function(matrix_ptr_2, j, i+1)
-
-
+    		mx->b[i] = finite_difference_function(matrix, j, i+1);
     	}
 
-    	mx->A[]
+    	mx->A[0][0] = 1;
+      mx->A[matrix_size-1][matrix_size-1] = 1;
 
+      for(int i = 1; i < matrix_size - 1; ++i)
+      {
+        mx->A[i][i-1] = previous_partial_derivative(matrix, i, i + 1);
+        mx->A[i][i]   = current_partial_derivative(matrix, i, i + 1);
+        mx->A[i][i+1] = next_partial_derivative(matrix, i, i + 1);
+      }
 
+      delta_x = tridiagonalmatrix_right_solve(mx);
 
-    	
-    } while (/* condition */);
+      copy_arr(current_values, prev_values, matrix_size);
+      add_to_first_vector(current_values, delta_x, matrix_size);
+    } while (check_finish_condition(current_values, prev_values, matrix_size));
   }
 }
 
@@ -241,7 +248,7 @@ double current_partial_derivative(double** matrix, int i, int j)
 double next_partial_derivative(double** matrix, int i, int j)
 {
   // return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j+1][i+1] + 6 * matrix[j+1][i-1] - 8 * matrix[j+1][i]);
-	return ALPHA * square(matrix[j][i]) + ALPHA * matrix[j][i] * matrix[j][i+1] - ALPHA * matrix[j][i] * matrix[j][i-1]
+	return ALPHA * square(matrix[j][i]) + ALPHA * matrix[j][i] * matrix[j][i+1] - ALPHA * matrix[j][i] * matrix[j][i-1];
 }
 
 double finite_difference_function(double** matrix, int i, int j)
@@ -249,7 +256,7 @@ double finite_difference_function(double** matrix, int i, int j)
 	return ALPHA * ( square(matrix[j][i]) * matrix[j][i-1] - 2.0 * cube(matrix[j][i]) + square(matrix[j][i]) * matrix[j][i+1] )
 
 
-	+ 0.5 * ALPHA (  matrix[j][i] * square(matrix[j][i+1]) - 2.0 * matrix[j][i] * matrix[j][i+1] * matrix[j][i-1] 
+	+ 0.5 * ALPHA * (  matrix[j][i] * square(matrix[j][i+1]) - 2.0 * matrix[j][i] * matrix[j][i+1] * matrix[j][i-1] 
 		+ matrix[j][i] * square(matrix[j][i-1])  )
 
 	-( matrix[j][i]/ T_STEP ) + matrix[j-1][i] / T_STEP;
@@ -273,4 +280,12 @@ void copy_arr(double* src_arr, double* dest_arr, int size)
 	{
 		dest_arr[i] = src_arr[i];
 	}
+}
+
+void add_to_first_vector(double* v1, double* v2, int size)
+{
+  for(int i = 0; i < size; ++i)
+  {
+    v1[i] += v2[i];
+  }
 }

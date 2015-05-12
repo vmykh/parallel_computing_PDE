@@ -3,7 +3,7 @@
 #include <omp.h>
 #include "./matrix.h"
 
-double* tridiagonalmatrix_parallel_solve(matrix* mtr)
+double* tridiagonalmatrix_parallel_solve(Matrix* mtr)
 {
   int p = mtr->size / 2 + (mtr->size % 2);
   double* alphas = allocate(double, mtr->size);

@@ -10,15 +10,15 @@ typedef struct _matrix{
   int      size;
   double*  b;
   double** A;
-} matrix;
+} Matrix;
 
 /**
 * read_matrix
 * @param  char*   filename - name of file with matrix
-* @return matrix* pointer at the type matrix
+* @return Matrix* pointer at the type matrix
 * @brief reads matrix, the vector of free members and its size
 */
-matrix* read_matrix(char * filename)
+Matrix* read_matrix(char * filename)
 {
   FILE * file = fopen(filename, "r");
 
@@ -27,7 +27,7 @@ matrix* read_matrix(char * filename)
     return NULL;
   }
 
-  matrix* m = allocate(matrix, 1);
+  Matrix* m = allocate(Matrix, 1);
   
   fscanf(file, "%d", &(m->size));
 
@@ -75,7 +75,7 @@ void write_result(char * filename, double* result, int size)
   }
 }
 
-double* tridiagonalmatrix_right_solve(matrix* mtr)
+double* tridiagonalmatrix_right_solve(Matrix* mtr)
 {
   double** A    = mtr->A;
   double*  b    = mtr->b;
@@ -109,7 +109,7 @@ double* tridiagonalmatrix_right_solve(matrix* mtr)
   return xs;
 }
 
-double* tridiagonalmatrix_left_solve(matrix* mtr)
+double* tridiagonalmatrix_left_solve(Matrix* mtr)
 {
   double** A    = mtr->A;
   double*  b    = mtr->b;
@@ -143,7 +143,7 @@ double* tridiagonalmatrix_left_solve(matrix* mtr)
   return xs;
 }
 
-void calculate_alphas_and_betas(matrix* mtr, double* alphas, double* betas, int p)
+void calculate_alphas_and_betas(Matrix* mtr, double* alphas, double* betas, int p)
 {
   double** A    = mtr->A;
   double*  b    = mtr->b;
@@ -164,7 +164,7 @@ void calculate_alphas_and_betas(matrix* mtr, double* alphas, double* betas, int 
   }
 }
 
-void calculate_xies_and_etas(matrix* mtr, double* xies, double* etas, int p)
+void calculate_xies_and_etas(Matrix* mtr, double* xies, double* etas, int p)
 {
   double** A    = mtr->A;
   double*  b    = mtr->b;
