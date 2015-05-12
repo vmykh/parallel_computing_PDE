@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <omp.h>
 
 #include "./lib/matrix.h"   //kroosh tridiagonal solver
 // #include "./lib/omp.h"      //kroosh tridiagonal parallel solver
@@ -122,6 +123,7 @@ void solve_pde(double** matrix)   //solve using implicit method
   for (int j = 1; j < T_POINTS_AMOUNT - 1; ++j)  //i for x axis, j for t axis
   {
 
+  	#pragma omp parallel for
     for (int i = 1; i < X_POINTS_AMOUNT - 1; ++i)   //starting Newton method
     {
     	matrix[j][i] = matrix[j-1][i];
@@ -148,6 +150,7 @@ void solve_pde(double** matrix)   //solve using implicit method
     	}
 
     	//initilize vector b in mx
+    	#pragma omp parallel for
     	for (int i = 0; i < matrix_size; ++i)
     	{
     		mx->b[i] = -finite_difference_function(matrix, i+1, j);
@@ -158,35 +161,37 @@ void solve_pde(double** matrix)   //solve using implicit method
     	 mx->A[0][0] = current_partial_derivative(matrix, 1, j);
     	 mx->A[0][1] = next_partial_derivative(matrix, 1, j);
 
-      for(int i = 1; i < matrix_size - 1; ++i)
-      {
-        mx->A[i][i-1] = previous_partial_derivative(matrix, i + 1, j);
-        mx->A[i][i]   = current_partial_derivative(matrix, i + 1, j);
-        mx->A[i][i+1] = next_partial_derivative(matrix, i + 1, j);
-      }
+    	#pragma omp parallel for
+      	for(int i = 1; i < matrix_size - 1; ++i)
+      	{
+        	mx->A[i][i-1] = previous_partial_derivative(matrix, i + 1, j);
+       		mx->A[i][i]   = current_partial_derivative(matrix, i + 1, j);
+        	mx->A[i][i+1] = next_partial_derivative(matrix, i + 1, j);
+     	}
 
-      mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
+      	mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
     	mx->A[mx->size - 1][mx->size - 1] = current_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
-      delta_x = tridiagonalmatrix_right_solve(mx);
+      	delta_x = tridiagonalmatrix_right_solve(mx);
 
-      printf("delta x\n");
-      for(int p = 0; p < mx->size; ++p)
-      {
-        printf("%lf ", delta_x[p]);
-      }
-      printf("\n");
+      	// printf("delta x\n");
+      	// for(int p = 0; p < mx->size; ++p)
+      	// {
+       //  	printf("%lf ", delta_x[p]);
+      	// }
+      	// printf("\n");
 
-      copy_arr(current_values, prev_values, matrix_size);
-      add_to_first_vector(current_values, delta_x, matrix_size);
-    } while (!is_finish_condition(current_values, prev_values, matrix_size));
+      	copy_arr(current_values, prev_values, matrix_size);
+      	add_to_first_vector(current_values, delta_x, matrix_size);
+      	delete_Matrix(mx);
+	} while (!is_finish_condition(current_values, prev_values, matrix_size));
 
-    printf("omegas x\n");
-    for(int p = 0; p < matrix_size; ++p)
-    {
-      printf("%lf ", current_values[p]);
-    }
-    printf("\n");
+    // printf("omegas x\n");
+    // for(int p = 0; p < matrix_size; ++p)
+    // {
+    //   printf("%lf ", current_values[p]);
+    // }
+    // printf("\n");
   }
 }
 
