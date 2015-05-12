@@ -16,9 +16,9 @@
 #define B_FUNC 1.0
 
 
-#define X_MIN 0.0
+#define X_MIN 0.1
 #define X_MAX 0.7
-#define T_MIN 0.0
+#define T_MIN 0.1
 #define T_MAX 0.5
 
 #define X_POINTS_AMOUNT 5
@@ -26,7 +26,7 @@
 #define DEBUG_FILE_NAME "data/debug.dat"
 #define FILE_NAME "data/result.dat"
 
-#define NEWTON_METHOD_TOLERANCE 10000000.0  //condition to end iteration in Newton method: 
+#define NEWTON_METHOD_TOLERANCE 0.01  //condition to end iteration in Newton method: 
 					// max(vector_x_i - vector_X_i-1) < NEWTON_METHOD_TOLERANCE
 #define STARTING_VALUE_FOR_NEWTON_METHOD 0.5
 
@@ -48,7 +48,6 @@ double** create_matrix(int N, int M);
 double exact_solution_func(double x, double t);
 void init_boundaries(double** matrix);
 void solve_pde(double** matrix);
-double calculate_next_layer_point(double** matrix, int j, int i);  //i for x axis, j for t axis
 
 double approx_t_first_deriv(double** matrix, int j, int i);   //i for x axis, j for t axis
 double approx_x_first_deriv(double** matrix, int j, int i);
@@ -185,20 +184,10 @@ void solve_pde(double** matrix)   //solve using implicit method
     printf("omegas x\n");
     for(int p = 0; p < matrix_size; ++p)
     {
-      printf("%lf ", prev_values[p]);
       printf("%lf ", current_values[p]);
-      printf("\n");
     }
     printf("\n");
   }
-}
-
-double calculate_next_layer_point(double** matrix, int j, int i)   //  i for x axis, j for t axis
-{
-  return matrix[j][i] + A_DIFF * T_STEP * (
-    - 1.0 / (matrix[j][i] * matrix[j][i]) * approx_x_first_deriv(matrix, j, i) * approx_x_first_deriv(matrix, j, i)
-    + 1.0 / matrix[j][i] * approx_x_second_deriv(matrix, j, i)
-  );
 }
 
 double approx_x_first_deriv(double** matrix, int j, int i)
