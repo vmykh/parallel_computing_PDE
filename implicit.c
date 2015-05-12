@@ -6,8 +6,8 @@
 // #include "./lib/omp.h"      //kroosh tridiagonal parallel solver
 
 #define C 1.0
-#define A 1.0
-#define B -1.0
+#define A_DIFF 1.0
+#define B_DIFF -1.0
 
 #define X_MIN 0.0
 #define X_MAX 0.5
@@ -87,8 +87,9 @@ double** create_matrix(int N, int M)
 
 double exact_solution_func(double x, double t)
 {
-  return 1.0 / (N_FUNC * x - A_DIFF * C1_FUNC * C1_FUNC * t + C2_FUNC);   //kroosh
+  return pow(-sqrt(-B_DIFF / A_DIFF) + C * exp(-5 * A_DIFF * t / 6 + x * sqrt((A_DIFF + 1) / 6)), -2);
 }
+
 
 void init_boundaries(double** matrix)
 {
