@@ -26,7 +26,7 @@
 #define DEBUG_FILE_NAME "data/debug.dat"
 #define FILE_NAME "data/result.dat"
 
-#define NEWTON_METHOD_TOLERANCE 0.01  //condition to end iteration in Newton method: 
+#define NEWTON_METHOD_TOLERANCE 0.0001  //condition to end iteration in Newton method: 
 					// max(vector_x_i - vector_X_i-1) < NEWTON_METHOD_TOLERANCE
 #define STARTING_VALUE_FOR_NEWTON_METHOD 0.5
 
@@ -166,7 +166,7 @@ void solve_pde(double** matrix)   //solve using implicit method
       }
 
       mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
-    	mx->A[mx->size - 1][mx->size - 1] = next_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
+    	mx->A[mx->size - 1][mx->size - 1] = current_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
       delta_x = tridiagonalmatrix_right_solve(mx);
 
