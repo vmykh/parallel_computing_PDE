@@ -156,8 +156,7 @@ double current_partial_derivative(double** matrix, int i, int j)
 
 double next_partial_derivative(double** matrix, int i, int j)
 {
-<<<<<<< HEAD
-  return 3.0;
+  return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j+1][i+1] + 6 * matrix[j+1][i-1] - 8 * matrix[j+1][i]);
 }
 
 void tridiagonal_solve(const double* a, const double* b, double* c, double* d, double* x, int n)
@@ -180,7 +179,4 @@ void tridiagonal_solve(const double* a, const double* b, double* c, double* d, d
   x[n-1] = d[n-1];
   for (int i = n - 2; i >= 0; --i)
     x[i] = d[i] - c[i] * x[i+1];
-=======
-  return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j+1][i+1] + 6 * matrix[j+1][i-1] - 8 * matrix[j+1][i]);
->>>>>>> 1904c7a3be5ac194b70e9bdccfef32dd450d9df9
 }
