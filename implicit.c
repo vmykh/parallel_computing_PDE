@@ -217,8 +217,8 @@ double next_partial_derivative(double** matrix, int i, int j)
 
 double finite_difference_function(double** matrix, int i, int j)
 {
-  return matrix[j][i] * (1 - T_STEP + 2 * MAX_SIGMA) - MAX_SIGMA * ( matrix[j][i+1] - matrix[j][i-1] ) 
-          + T_STEP * square(matrix[j][i]);
+  return matrix[j][i] - matrix[j-1][i] + (T_STEP / square(X_STEP)) * (matrix[j][i-1] - 2 * matrix[j][i] + matrix[j][i+1]
+      + A_DIFF * square(X_STEP) * matrix[j][i] + B_DIFF * square(X_STEP) * square(matrix[j][i]));
 }
 
 int is_finish_condition(double* v1, double* v2, int size)
