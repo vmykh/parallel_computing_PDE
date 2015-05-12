@@ -156,5 +156,27 @@ double current_partial_derivative(double** matrix, int i, int j)
 
 double next_partial_derivative(double** matrix, int i, int j)
 {
-  
+  return 3.0;
+}
+
+void tridiagonal_solve(const double* a, const double* b, double* c, double* d, double* x, int n)
+{
+  if(b[0] == 0){
+    printf("Zero Exception b = 0\n");
+    return;
+  }
+
+  c[0] /= b[0];
+  d[0] /= b[0];
+
+  for (int i = 1; i < n; ++i)
+  {
+    double id = 1 / (b[i] - c[i-1] * a[i]);
+    c[i] *= id;
+    d[i] = (d[i] - d[i-1] * a[i]) * id;
+  }
+
+  x[n-1] = d[n-1];
+  for (int i = n - 2; i >= 0; --i)
+    x[i] = d[i] - c[i] * x[i+1];
 }
