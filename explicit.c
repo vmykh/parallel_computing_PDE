@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <omp.h>
+// #include <omp.h>
 
 #define A_DIFF 1.0
 #define N_FUNC 1.0
