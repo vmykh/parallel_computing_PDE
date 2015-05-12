@@ -5,28 +5,22 @@
 #include "./lib/matrix.h"   //kroosh tridiagonal solver
 // #include "./lib/omp.h"      //kroosh tridiagonal parallel solver
 
-// #define A_DIFF 1.0      //kroosh
-// #define N_FUNC 1.0
-// #define C1_FUNC 1.0
-// #define C2_FUNC 1.0
-
-
-#define A_DIFF 1.0       //vmykh   
-#define A_FUNC 1.0
-#define B_FUNC 1.0
-
+#define A_DIFF 1.0      //kroosh
+#define N_FUNC 1.0
+#define C1_FUNC 1.0
+#define C2_FUNC 1.0
 
 #define X_MIN 0.1
 #define X_MAX 0.7
 #define T_MIN 0.1
 #define T_MAX 0.5
 
-#define X_POINTS_AMOUNT 5
+#define X_POINTS_AMOUNT 15
 
 #define DEBUG_FILE_NAME "data/debug.dat"
 #define FILE_NAME "data/result.dat"
 
-#define NEWTON_METHOD_TOLERANCE 0.01  //condition to end iteration in Newton method: 
+#define NEWTON_METHOD_TOLERANCE 0.0001  //condition to end iteration in Newton method: 
 					// max(vector_x_i - vector_X_i-1) < NEWTON_METHOD_TOLERANCE
 #define STARTING_VALUE_FOR_NEWTON_METHOD 0.5
 
@@ -41,8 +35,7 @@
 #define T_STEP (MAX_SIGMA * X_STEP * X_STEP)
 #define T_POINTS_AMOUNT (int) ((T_MAX - T_MIN) / T_STEP)
 
-
-#define ALPHA (A_DIFF / (X_STEP * X_STEP))
+#define PSI (T_STEP / (4 * X_STEP * X_STEP))
 
 double** create_matrix(int N, int M);
 double exact_solution_func(double x, double t);
@@ -96,8 +89,7 @@ double** create_matrix(int N, int M)
 
 double exact_solution_func(double x, double t)
 {
-  // return 1.0 / (N_FUNC * x - A_DIFF * C1_FUNC * C1_FUNC * t + C2_FUNC);   //kroosh
-	return sqrt(pow(x - A_FUNC, 2.0) / (4 * A_DIFF * (B_FUNC - t)));
+  return 1.0 / (N_FUNC * x - A_DIFF * C1_FUNC * C1_FUNC * t + C2_FUNC);   //kroosh
 }
 
 void init_boundaries(double** matrix)
@@ -153,10 +145,8 @@ void solve_pde(double** matrix)   //solve using implicit method
     		mx->b[i] = -finite_difference_function(matrix, i+1, j);
     	}
 
-    	// mx->A[0][0] = 1;
-     //  mx->A[matrix_size-1][matrix_size-1] = 1;
-    	 mx->A[0][0] = current_partial_derivative(matrix, 1, j);
-    	 mx->A[0][1] = next_partial_derivative(matrix, 1, j);
+      mx->A[0][0] = current_partial_derivative(matrix, 1, j);
+      mx->A[0][1] = next_partial_derivative(matrix, 1, j);
 
       for(int i = 1; i < matrix_size - 1; ++i)
       {
@@ -166,27 +156,13 @@ void solve_pde(double** matrix)   //solve using implicit method
       }
 
       mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
-    	mx->A[mx->size - 1][mx->size - 1] = next_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
+    	mx->A[mx->size - 1][mx->size - 1] = current_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
       delta_x = tridiagonalmatrix_right_solve(mx);
-
-      printf("delta x\n");
-      for(int p = 0; p < mx->size; ++p)
-      {
-        printf("%lf ", delta_x[p]);
-      }
-      printf("\n");
 
       copy_arr(current_values, prev_values, matrix_size);
       add_to_first_vector(current_values, delta_x, matrix_size);
     } while (!is_finish_condition(current_values, prev_values, matrix_size));
-
-    printf("omegas x\n");
-    for(int p = 0; p < matrix_size; ++p)
-    {
-      printf("%lf ", current_values[p]);
-    }
-    printf("\n");
   }
 }
 
@@ -225,54 +201,31 @@ void write_matrix_to_file(double** matrix)
   }
 }
 
-// double previous_partial_derivative(double** matrix, int i, int j)
-// {
-//   return 2 * (T_STEP / (4.0 * X_STEP * X_STEP)) * (3 * matrix[j+1][i+1] - matrix[j+1][i-1]);
-// }
-
-// double current_partial_derivative(double** matrix, int i, int j)
-// {
-//   return -3 * matrix[j+1][i]*matrix[j+1][i] + 2 * matrix[j][i] * matrix[j+1][i] - 8 * (T_STEP / (4.0 * X_STEP * X_STEP)) * matrix[j+1][i+1];
-// }
-
-// double next_partial_derivative(double** matrix, int i, int j)
-// {
-//   return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j+1][i+1] + 6 * matrix[j+1][i-1] - 8 * matrix[j+1][i]);
-// }
-
 double previous_partial_derivative(double** matrix, int i, int j)
 {
-  // return 2 * (T_STEP / (4.0 * X_STEP * X_STEP)) * (3 * matrix[j+1][i+1] - matrix[j+1][i-1]);  //kroosh
-	return ALPHA * (square(matrix[j][i]) - matrix[j][i] * matrix[j][i+1] + matrix[j][i] * matrix[j][i - 1]);
+  return 2 * (T_STEP / (4.0 * X_STEP * X_STEP)) * (3 * matrix[j][i+1] - matrix[j][i-1]);
 }
 
 double current_partial_derivative(double** matrix, int i, int j)
 {
-  // return -3 * matrix[j+1][i]*matrix[j+1][i] + 2 * matrix[j][i] * matrix[j+1][i] - 8 * (T_STEP / (4.0 * X_STEP * X_STEP)) * matrix[j+1][i+1];
-	return 2 * ALPHA * matrix[j][i] * matrix[j][i - 1] - 6.0 * ALPHA * square(matrix[j][i]) +
-			2.0 * ALPHA * matrix[j][i] * matrix[j][i+1] + 
-
-			0.5 * ALPHA * square(matrix[j][i+1]) - ALPHA * matrix[j][i+1] * matrix[j][i-1] + 
-			0.5 * ALPHA * square(matrix[j][i-1])   
-
-			- 1 / T_STEP;
+  return -3 * matrix[j][i]*matrix[j][i] + 2 * matrix[j-1][i] * matrix[j][i] - 8 * (T_STEP / (4.0 * X_STEP * X_STEP)) * matrix[j][i+1];
 }
 
 double next_partial_derivative(double** matrix, int i, int j)
 {
-  // return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j+1][i+1] + 6 * matrix[j+1][i-1] - 8 * matrix[j+1][i]);
-	return ALPHA * square(matrix[j][i]) + ALPHA * matrix[j][i] * matrix[j][i+1] - ALPHA * matrix[j][i] * matrix[j][i-1];
+  return (T_STEP / (4.0 * X_STEP * X_STEP)) * (6 * matrix[j][i+1] + 6 * matrix[j][i-1] - 8 * matrix[j][i]);
 }
 
 double finite_difference_function(double** matrix, int i, int j)
 {
-	return ALPHA * ( square(matrix[j][i]) * matrix[j][i-1] - 2.0 * cube(matrix[j][i]) + square(matrix[j][i]) * matrix[j][i+1] )
-
-
-	+ 0.5 * ALPHA * (  matrix[j][i] * square(matrix[j][i+1]) - 2.0 * matrix[j][i] * matrix[j][i+1] * matrix[j][i-1] 
-		+ matrix[j][i] * square(matrix[j][i-1])  )
-
-	-( matrix[j][i]/ T_STEP ) + matrix[j-1][i] / T_STEP;
+  return - (matrix[j][i]) * (matrix[j][i]) * (matrix[j][i])
+         + matrix[j-1][i] * matrix[j][i] * matrix[j][i]
+         - PSI * (matrix[j][i + 1]) * (matrix[j][i + 1])
+         + 2 * PSI * matrix[j][i+1] * matrix[j][i-1]
+         - PSI * matrix[j][i-1] * matrix[j][i-1] 
+         + 4 * PSI * matrix[j][i+1] * matrix[j][i+1]
+         - 8 * PSI * matrix[j][i] * matrix[j][i+1]
+         + 4 * PSI * matrix[j][i+1] * matrix[j][i-1];
 }
 
 int is_finish_condition(double* v1, double* v2, int size)
