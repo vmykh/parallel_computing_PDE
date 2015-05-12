@@ -1,6 +1,8 @@
-import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import matplotlib.pyplot as plt
+import numpy as np
 
 def drange(start, n, step):
 	result = float(start)
@@ -33,15 +35,19 @@ def getDataFromFile():
 	return realXs, realTs, realUis
 
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# ax = fig.add_subplot(111, projection='3d')
+ax = fig.gca(projection='3d')
 
 xs, ts, Ui = getDataFromFile()
 
-ax.scatter(xs, ts, Ui, c='r', marker='o')
 
-ax.set_xlabel('x')
-ax.set_ylabel('t')
-ax.set_zlabel('U`')
+ax.plot_trisurf(xs, ts, Ui, linewidth=0.01, cmap=cm.jet)
+
+# ax.scatter(xs, ts, Ui, c='r', marker='o')
+
+# ax.set_xlabel('x')
+# ax.set_ylabel('t')
+# ax.set_zlabel('U`')
 
 plt.show()
 
