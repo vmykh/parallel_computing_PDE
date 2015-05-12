@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+// #include <omp.h>
 
 #define C 1.0
 #define A 1.0
@@ -11,7 +12,7 @@
 #define T_MIN -0.5
 #define T_MAX 0.0
 
-#define X_POINTS_AMOUNT 10
+#define X_POINTS_AMOUNT 30
 
 #define DEBUG_FILE_NAME "data/debug.dat"
 #define FILE_NAME "data/result.dat"
@@ -68,12 +69,14 @@ double exact_solution_func(double x, double t)
 void init_boundaries(double** matrix)
 {
 	//init T_MIN line
+	#pragma omp parallel for
 	for (int i = 0; i < X_POINTS_AMOUNT; ++i)
 	{
 		matrix[0][i] = exact_solution_func(X_MIN + X_STEP * i, T_MIN);
 	}
 
 	//init X_MIN, X_MAX
+	#pragma omp parallel for
 	for(int j = 1; j < T_POINTS_AMOUNT; ++j)
 	{
 		matrix[j][0] = exact_solution_func(X_MIN, T_MIN + T_STEP * j);
@@ -85,6 +88,7 @@ void init_boundaries(double** matrix)
 {
 	for (int j = 0; j < T_POINTS_AMOUNT - 1; ++j)  //i for x axis, j for t axis
 	{
+		#pragma omp parallel for
 		for (int i = 1; i < X_POINTS_AMOUNT - 1; ++i)
 		{
 			matrix[j+1][i] = calculate_next_layer_point(matrix, j, i);
