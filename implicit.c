@@ -125,7 +125,7 @@ void solve_pde(double** matrix)   //solve using implicit method
 
     for (int i = 1; i < X_POINTS_AMOUNT - 1; ++i)   //starting Newton method
     {
-    	matrix[j][i] = STARTING_VALUE_FOR_NEWTON_METHOD;
+    	matrix[j][i] = matrix[j-1][i];
     }
 
     int matrix_size = X_POINTS_AMOUNT - 2;
@@ -151,7 +151,7 @@ void solve_pde(double** matrix)   //solve using implicit method
     	//initilize vector b in mx
     	for (int i = 0; i < matrix_size; ++i)
     	{
-    		mx->b[i] = finite_difference_function(matrix, i+1, j);
+    		mx->b[i] = -finite_difference_function(matrix, i+1, j);
     	}
 
     	// mx->A[0][0] = 1;
