@@ -37,11 +37,11 @@
 #define square(x) (x * x)
 #define cube(x) (x * x * x)
 
-#define X_STEP (X_MAX - X_MIN) / (double) X_POINTS_AMOUNT
+#define X_STEP ((X_MAX - X_MIN) / (double) X_POINTS_AMOUNT)
 #define T_STEP (MAX_SIGMA * X_STEP * X_STEP)
 #define T_POINTS_AMOUNT (int) ((T_MAX - T_MIN) / T_STEP)
 
-#define ALPHA A_DIFF / X_STEP
+#define ALPHA (A_DIFF / (X_STEP * X_STEP))
 
 double** create_matrix(int N, int M);
 double exact_solution_func(double x, double t);
@@ -240,7 +240,7 @@ void write_matrix_to_file(double** matrix)
 double previous_partial_derivative(double** matrix, int i, int j)
 {
   // return 2 * (T_STEP / (4.0 * X_STEP * X_STEP)) * (3 * matrix[j+1][i+1] - matrix[j+1][i-1]);  //kroosh
-	return ALPHA * (matrix[j][i] - matrix[j][i] * matrix[j][i+1] + matrix[j][i] * matrix[j][i - 1]);
+	return ALPHA * (square(matrix[j][i]) - matrix[j][i] * matrix[j][i+1] + matrix[j][i] * matrix[j][i - 1]);
 }
 
 double current_partial_derivative(double** matrix, int i, int j)
