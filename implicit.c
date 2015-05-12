@@ -68,10 +68,14 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 int main(int argc, char const *argv[])
 {
   double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
+
+  printf("before init_boundaries\n");
   init_boundaries(matrix);
   
+  printf("solve_pde\n");
   solve_pde(matrix);
 
+  printf("write matrix\n");
   write_matrix_to_file(matrix);
 
   printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
@@ -143,29 +147,35 @@ void solve_pde(double** matrix)   //solve using implicit method
     	for (int i = 0; i < matrix_size; ++i)
     	{
     		mx->A[i] = allocate(double, matrix_size);
+    		fill_array(mx->A[i], mx->size, 0.0);
     	}
 
     	//initilize vector b in mx
     	for (int i = 0; i < matrix_size; ++i)
     	{
-    		mx->b[i] = finite_difference_function(matrix, j, i+1);
+    		mx->b[i] = -finite_difference_function(matrix, i+1, j);
     	}
 
-    	mx->A[0][0] = 1;
-      mx->A[matrix_size-1][matrix_size-1] = 1;
+    	// mx->A[0][0] = 1;
+     //  mx->A[matrix_size-1][matrix_size-1] = 1;
+    	 mx->A[0][0] = current_partial_derivative(matrix, 1, j);
+    	 mx->A[0][1] = next_partial_derivative(matrix, 1, j);
 
       for(int i = 1; i < matrix_size - 1; ++i)
       {
-        mx->A[i][i-1] = previous_partial_derivative(matrix, i, i + 1);
-        mx->A[i][i]   = current_partial_derivative(matrix, i, i + 1);
-        mx->A[i][i+1] = next_partial_derivative(matrix, i, i + 1);
+        mx->A[i][i-1] = previous_partial_derivative(matrix, i + 1, j);
+        mx->A[i][i]   = current_partial_derivative(matrix, i + 1, j);
+        mx->A[i][i+1] = next_partial_derivative(matrix, i + 1, j);
       }
+
+      	mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
+    	mx->A[mx->size - 1][mx->size - 1] = next_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
       delta_x = tridiagonalmatrix_right_solve(mx);
 
       copy_arr(current_values, prev_values, matrix_size);
       add_to_first_vector(current_values, delta_x, matrix_size);
-    } while (check_finish_condition(current_values, prev_values, matrix_size));
+    } while (!check_finish_condition(current_values, prev_values, matrix_size));
   }
 }
 
