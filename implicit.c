@@ -63,39 +63,6 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 
 int main(int argc, char const *argv[])
 {
-  
-
-  Matrix* m = create_Matrix(3);
-  m->size = 3;
-
-  m->A[0][0] = 5.0;
-  m->A[1][1] = 5.1;
-  m->A[2][2] = 5.2;
-
-  m->A[0][1] = 10.0;
-  m->A[1][2] = 10.1;
-
-  m->A[1][0] = 20.0;
-  m->A[2][1] = 20.1;
-
-  m->b[0] = 150;
-  m->b[1] = 151;
-  m->b[2] = 152;
-
-
-  print_Matrix(m);
-
-  double* enc = encode_Matrix(m);
-
-  printf("\n\n\nEncoded:\n");
-
-  for (int i = 0; i < get_encoded_matrix_size(m); ++i)
-  {
-  	printf("%15lf\n", enc[i]);
-  }
-
-  printf("\n\n\nDecoded:\n");
-  print_Matrix(m);
 
 
   	double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
@@ -110,9 +77,6 @@ int main(int argc, char const *argv[])
   	write_matrix_to_file(matrix);
 
   	printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
-
-
-
 
 
 
