@@ -1,7 +1,9 @@
-##include "./matrix.h"
+#include "./matrix.h"
+#include <mpi.h>
 
 double* tridiagonal_mpi_solve(Matrix* mtr)
 {
+    MPI_Init(NULL, NULL);
   // Find out rank, size
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -9,7 +11,7 @@ double* tridiagonal_mpi_solve(Matrix* mtr)
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   if (world_size != 2) {
-    fprintf(stderr, "This taks can be executed in 2 processes only %s\n", argv[0]);
+    fprintf(stderr, "This taks can be executed in 2 processes only %s\n");
     MPI_Abort(MPI_COMM_WORLD, 1); 
 
     return NULL;
@@ -67,10 +69,6 @@ double* tridiagonal_mpi_solve(Matrix* mtr)
     {
       xs[i] = xs_temp[i];
     }
-
-    printf("result:\n");
-    print_vector(xs, mtr->size, "%lf ");
-    printf("\n");
   }
   else
   {
@@ -81,6 +79,8 @@ double* tridiagonal_mpi_solve(Matrix* mtr)
 
     MPI_Send(xs, mtr->size, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
   }
+
+  MPI_Finalize();
 
   return xs;
 }

@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <omp.h>
+#include <mpi.h>
 
 #include "./lib/matrix.h"   //kroosh tridiagonal solver
 #include "./lib/omp.h"      //kroosh tridiagonal parallel solver
+#include "./lib/tridiagonal_mpi.h"      //kroosh tridiagonal parallel solver
 
 #define A_DIFF 1.0       //vmykh   
 #define A_FUNC 1.0
@@ -25,7 +27,6 @@
 
 #define MAX_SIGMA 0.1  //should be less than 0.5
 
-#define allocate(type, size) (type*)malloc(sizeof(type) * size)
 #define fill_array(arr, size, default_value) for (int _iqw_ = 0; _iqw_ < size; ++_iqw_) {arr[_iqw_] = default_value;}
 #define square(x) (x * x)
 #define cube(x) (x * x * x)
@@ -59,7 +60,6 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 
 int main(int argc, char const *argv[])
 {
-  MPI_Init(NULL, NULL);
 
   double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
 
@@ -73,8 +73,6 @@ int main(int argc, char const *argv[])
   write_matrix_to_file(matrix);
 
   printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
-
-  MPI_Finalize();
 
   return 0;
 }
