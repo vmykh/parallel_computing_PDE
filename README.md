@@ -1,7 +1,19 @@
 # Parallel computing PDE
 ====================================
 
-plotter.py
+## MPI
+
+To compile mpi, run:
+```
+mpicc explicit.c -o ./bin/mpiversion -std=c99 -lm -fopenmp
+```
+
+To run mpi:
+```
+mpirun -np 2 ./bin/mpiversion
+```
+
+##plotter.py
 ---------
 Builds 3dPlot using matplotlib and numpy.
 
