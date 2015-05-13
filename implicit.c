@@ -59,18 +59,43 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 
 int main(int argc, char const *argv[])
 {
-  double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
-
-  printf("before init_boundaries\n");
-  init_boundaries(matrix);
   
-  printf("solve_pde\n");
-  solve_pde(matrix);
+  MPI_Init (&argc, &argv);
+  	
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  printf("write matrix\n");
-  write_matrix_to_file(matrix);
+  int PROCS_AMOUNT;
+  MPI_Comm_size(MPI_COMM_WORLD, &PROCS_AMOUNT);
 
-  printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
+
+
+  if (rank == 0)
+  {
+  	double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
+
+  	printf("before init_boundaries\n");
+  	init_boundaries(matrix);
+  	
+  	printf("solve_pde\n");
+  	solve_pde(matrix);
+
+  	printf("write matrix\n");
+  	write_matrix_to_file(matrix);
+
+  	printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
+
+  }
+  else
+  {
+  	
+  }
+
+
+
+
+
+  MPI_Finalize();
 
   return 0;
 }
