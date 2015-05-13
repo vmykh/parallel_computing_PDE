@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define allocate(type, size) (type*)malloc(sizeof(type)*size)
+// #define allocate(type, size) (type*)malloc(sizeof(type)*size)
+#define allocate(type, size) (type*)malloc(sizeof(type) * size)
+#define fill_array(arr, size, default_value) for (int _iqw_ = 0; _iqw_ < size; ++_iqw_) {arr[_iqw_] = default_value;}
 #define print_vector(vector, size, pattern) for(int i = 0; i < size; ++i) printf(pattern, vector[i]);
 
 typedef struct _matrix{
@@ -194,4 +196,40 @@ void delete_Matrix(Matrix* m)
   free(m->b);
   free(m->A);
   free(m);
+}
+
+Matrix* create_Matrix(int matrix_size)
+{
+  Matrix* m = allocate(Matrix, 1);
+  m->size = matrix_size;
+  m->b = allocate(double, matrix_size);
+  fill_array(m->b, matrix_size, 0.0);
+  m->A = allocate(double*, matrix_size);
+
+  for (int i = 0; i < matrix_size; ++i)
+  {
+    m->A[i] = allocate(double, matrix_size);
+    fill_array(m->A[i], matrix_size, 0.0);
+  }
+
+  return m;
+}
+
+void print_Matrix(Matrix* m)
+{
+  printf("Matrix size: %d\n", m->size);
+  printf("A:\n");
+  for (int i = 0; i < m->size; ++i)
+  {
+    for (int j = 0; j < m->size; ++j)
+    {
+      printf("%15lf ", m->A[i][j]);
+    }
+    printf("\n");
+  }
+  printf("b: \n");
+  for (int j = 0; j < m->size; ++j)
+    {
+      printf("%15lf ", m->b[j]);
+    }
 }

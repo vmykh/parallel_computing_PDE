@@ -25,8 +25,8 @@
 
 #define MAX_SIGMA 0.1  //should be less than 0.5
 
-#define allocate(type, size) (type*)malloc(sizeof(type) * size)
-#define fill_array(arr, size, default_value) for (int _iqw_ = 0; _iqw_ < size; ++_iqw_) {arr[_iqw_] = default_value;}
+// #define allocate(type, size) (type*)malloc(sizeof(type) * size)
+// #define fill_array(arr, size, default_value) for (int _iqw_ = 0; _iqw_ < size; ++_iqw_) {arr[_iqw_] = default_value;}
 #define square(x) (x * x)
 #define cube(x) (x * x * x)
 
@@ -53,6 +53,10 @@ double previous_partial_derivative(double** matrix, int i, int j);
 double current_partial_derivative(double** matrix, int i, int j);
 double next_partial_derivative(double** matrix, int i, int j);
 
+double* encode_Matrix(Matrix* m);
+Matrix* decode_Matrix(double* encoded, int matrix_size);
+int get_encoded_matrix_size(Matrix* m);
+
 void write_matrix_to_file(double** matrix);
 
 void copy_arr(double* src_arr, double* dest_arr, int size);
@@ -60,18 +64,40 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 int main(int argc, char const *argv[])
 {
   
-  MPI_Init (&argc, &argv);
-  	
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int PROCS_AMOUNT;
-  MPI_Comm_size(MPI_COMM_WORLD, &PROCS_AMOUNT);
+  Matrix* m = create_Matrix(3);
+  m->size = 3;
+
+  m->A[0][0] = 5.0;
+  m->A[1][1] = 5.1;
+  m->A[2][2] = 5.2;
+
+  m->A[0][1] = 10.0;
+  m->A[1][2] = 10.1;
+
+  m->A[1][0] = 20.0;
+  m->A[2][1] = 20.1;
+
+  m->b[0] = 150;
+  m->b[1] = 151;
+  m->b[2] = 152;
 
 
+  print_Matrix(m);
 
-  if (rank == 0)
+  double* enc = encode_Matrix(m);
+
+  printf("\n\n\nEncoded:\n");
+
+  for (int i = 0; i < get_encoded_matrix_size(m); ++i)
   {
+  	printf("%15lf\n", enc[i]);
+  }
+
+  printf("\n\n\nDecoded:\n");
+  print_Matrix(m);
+
+
   	double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
 
   	printf("before init_boundaries\n");
@@ -85,17 +111,13 @@ int main(int argc, char const *argv[])
 
   	printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
 
-  }
-  else
-  {
-  	
-  }
 
 
 
 
 
-  MPI_Finalize();
+
+
 
   return 0;
 }
@@ -288,4 +310,64 @@ void add_to_first_vector(double* v1, double* v2, int size)
   {
     v1[i] += v2[i];
   }
+}
+
+double* encode_Matrix(Matrix* m)
+{
+  double* encoded = allocate(double, get_encoded_matrix_size(m));
+  int iters = m->size - 1;
+
+  int upper_diag_shift = 0;
+  int middle_diag_shift = m->size - 1;
+  int lower_diag_shift = middle_diag_shift + m->size;
+  int b_vector_shift = lower_diag_shift + m->size - 1;
+
+  for (int i = 0; i < iters; ++i)
+  {
+    encoded[upper_diag_shift + i] = m->A[i][i + 1];
+    encoded[middle_diag_shift + i] = m->A[i][i];
+    encoded[lower_diag_shift + i] = m->A[i + 1][i];
+    encoded[b_vector_shift + i] = m->b[i];
+  }
+  encoded[middle_diag_shift + iters] = m->A[iters][iters];
+  encoded[b_vector_shift + iters] = m->b[iters];
+
+  return encoded;
+}
+
+Matrix* decode_Matrix(double* encoded, int matrix_size)
+{
+  // Matrix* m = allocate(Matrix, 1);
+  // m->size = matrix_size;
+  // m->b = allocate(double, matrix_size);
+  // m->A = allocate(double*, matrix_size);
+  // for (int i = 0; i < count; ++i)
+  // {
+  //   
+
+  Matrix* m = create_Matrix(matrix_size);
+
+  int upper_diag_shift = 0;
+  int middle_diag_shift = m->size - 1;
+  int lower_diag_shift = middle_diag_shift + m->size;
+  int b_vector_shift = lower_diag_shift + m->size - 1;
+
+  int iters = m->size - 1;
+  for (int i = 0; i < iters; ++i)
+  {
+    m->A[i][i + 1] = encoded[upper_diag_shift + i];
+    m->A[i][i] = encoded[middle_diag_shift + i];
+    m->A[i + 1][i] = encoded[lower_diag_shift + i];
+    m->b[i] = encoded[b_vector_shift + i];
+  }
+
+  m->A[iters][iters] = encoded[middle_diag_shift + iters];
+  m->b[iters] = encoded[b_vector_shift + iters];
+
+  return m;
+}
+
+int get_encoded_matrix_size(Matrix* m)
+{
+	return m->size * 4 - 2;
 }
