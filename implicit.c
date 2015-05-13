@@ -60,19 +60,54 @@ void copy_arr(double* src_arr, double* dest_arr, int size);
 
 int main(int argc, char const *argv[])
 {
+  MPI_Init(NULL, NULL);
+  // Find out rank, size
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
+  if (world_size != 2) {
+    fprintf(stderr, "This taks can be executed in 2 processes only %s\n");
+    MPI_Abort(MPI_COMM_WORLD, 1); 
 
-  printf("before init_boundaries\n");
-  init_boundaries(matrix);
-  
-  printf("solve_pde\n");
-  solve_pde(matrix);
+    return NULL;
+  }
 
-  printf("write matrix\n");
-  write_matrix_to_file(matrix);
+  if(world_rank == 0)
+  {
+    double** matrix = create_matrix(T_POINTS_AMOUNT, X_POINTS_AMOUNT);
 
-  printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
+    printf("before init_boundaries\n");
+    init_boundaries(matrix);
+    
+    printf("solve_pde\n");
+    solve_pde(matrix);
+
+    printf("write matrix\n");
+    write_matrix_to_file(matrix);
+
+    printf("T_POINTS_AMOUNT: %d\n", T_POINTS_AMOUNT);
+  }
+
+  if(world_rank == 1)
+  {
+    int stop_signal;
+
+    while(1)
+    {
+      MPI_Recv(&stop_signal, 1, MPI_INT, 0, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+      if(stop_signal)
+      {
+        break;
+      }
+
+      tridiagonal_mpi_solve_second_process();
+    }
+  }
+
+  MPI_Finalize();
 
   return 0;
 }
@@ -111,6 +146,7 @@ void init_boundaries(double** matrix)
 
 void solve_pde(double** matrix)   //solve using implicit method
 {
+  int stop_signal = 0;
 	// at each iteration we are calculating values for j row
   for (int j = 1; j < T_POINTS_AMOUNT - 1; ++j)  //i for x axis, j for t axis
   {
@@ -160,6 +196,7 @@ void solve_pde(double** matrix)   //solve using implicit method
       	mx->A[mx->size - 1][mx->size - 2] = previous_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
     	mx->A[mx->size - 1][mx->size - 1] = current_partial_derivative(matrix, X_POINTS_AMOUNT - 2, j);
 
+      MPI_Send(&stop_signal, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
       delta_x = tridiagonal_mpi_solve(mx);
 
       	copy_arr(current_values, prev_values, matrix_size);
@@ -168,6 +205,9 @@ void solve_pde(double** matrix)   //solve using implicit method
 	} while (!is_finish_condition(current_values, prev_values, matrix_size));
 
   }
+
+  stop_signal = 1;
+  MPI_Send(&stop_signal, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
 }
 
 double approx_x_first_deriv(double** matrix, int j, int i)
